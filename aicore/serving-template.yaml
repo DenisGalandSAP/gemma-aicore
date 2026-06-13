@@ -1,0 +1,45 @@
+apiVersion: ai.sap.com/v1alpha1
+kind: ServingTemplate
+metadata:
+  name: gemma-proxy
+  annotations:
+    scenarios.ai.sap.com/name: "Gemma (self-hosted via ngrok)"
+    scenarios.ai.sap.com/description: "Local Ollama Gemma exposed through a proxy"
+    executables.ai.sap.com/name: "gemma-proxy"
+    executables.ai.sap.com/description: "Reverse proxy to remote Ollama Gemma"
+  labels:
+    scenarios.ai.sap.com/id: "gemma-proxy"
+    ai.sap.com/version: "1.0.0"
+spec:
+  template:
+    apiVersion: "serving.kserve.io/v1beta1"
+    metadata:
+      annotations: |
+        autoscaling.knative.dev/metric: concurrency
+        autoscaling.knative.dev/target: 4
+        autoscaling.knative.dev/targetBurstCapacity: 0
+      labels: |
+        ai.sap.com/resourcePlan: starter
+    spec: |
+      predictor:
+        imagePullSecrets:
+          - name: gemma-ghcr
+        minReplicas: 1
+        maxReplicas: 1
+        containers:
+          - name: kserve-container
+            image: ghcr.io/denisgalandsap/gemma-proxy:1.0.0
+            ports:
+              - containerPort: 8080
+                protocol: TCP
+            env:
+              - name: NGROK_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: gemmacred
+                    key: url
+              - name: NGROK_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: gemmacred
+                    key: token
