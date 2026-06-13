@@ -22,8 +22,6 @@ spec:
         ai.sap.com/resourcePlan: starter
     spec: |
       predictor:
-        imagePullSecrets:
-          - name: gemma-ghcr
         minReplicas: 1
         maxReplicas: 1
         containers:
